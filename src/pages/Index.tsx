@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -24,7 +25,7 @@ const Index = () => {
   }, [navigate, user]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-900 dark:to-venti-green-950 p-4">
+    <div className="min-h-[calc(100vh-2.5rem)] flex flex-col items-center justify-center bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-900 dark:to-venti-green-950/40 p-4">
       <div className={`flex flex-col items-center transition-all duration-1000 ${isAnimating ? "opacity-100 scale-100" : "opacity-0 scale-110"}`}>
         <div className="w-48 h-48 mb-6 animate-breathe">
           <img 
