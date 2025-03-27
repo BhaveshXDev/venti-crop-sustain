@@ -14,6 +14,8 @@ import Dashboard from "./pages/Dashboard";
 import ControlPanel from "./pages/ControlPanel";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import Weather from "./pages/Weather";
+import Crops from "./pages/Crops";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
                 <Route path="/control" element={<ControlPanel />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/weather" element={<Weather />} />
+                <Route path="/crops" element={<Crops />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

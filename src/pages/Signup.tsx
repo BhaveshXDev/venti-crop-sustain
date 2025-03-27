@@ -1,19 +1,23 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [gender, setGender] = useState("male");
   const [showPassword, setShowPassword] = useState(false);
   const { signup, loading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signup(email, password, name);
+    await signup(email, password, name, gender, mobile);
   };
 
   return (
@@ -81,6 +85,48 @@ const Signup = () => {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="mobile" className="venti-label">
+                Mobile Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-venti-gray-400">
+                  <Phone size={18} />
+                </div>
+                <input
+                  id="mobile"
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="venti-input pl-10 w-full"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="venti-label block mb-2">Gender</label>
+              <RadioGroup 
+                value={gender} 
+                onValueChange={setGender}
+                className="flex space-x-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="male" id="gender-male" />
+                  <Label htmlFor="gender-male">Male</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="female" id="gender-female" />
+                  <Label htmlFor="gender-female">Female</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="other" id="gender-other" />
+                  <Label htmlFor="gender-other">Other</Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="space-y-1.5">

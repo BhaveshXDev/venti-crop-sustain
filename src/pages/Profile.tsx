@@ -1,25 +1,55 @@
 
-import React, { useState } from "react";
-import { Mail, User, Building, MapPin, Phone, Leaf } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Mail, User, Building, MapPin, Phone, Leaf, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navigation from "@/components/Navigation";
 import { getGreenhouseData, Greenhouse } from "@/utils/api";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const [greenhouse] = useState<Greenhouse>(getGreenhouseData());
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState("555-123-4567");
+  const [phone, setPhone] = useState(user?.mobile || "555-123-4567");
   const [company, setCompany] = useState("VentiFarms Inc.");
-  const [location, setLocation] = useState("Central Valley, CA");
+  const [location, setLocation] = useState(user?.location || "Central Valley, CA");
   const [isEditing, setIsEditing] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | undefined>(user?.profileImage);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSaveProfile = () => {
     // In a real app, this would update the user profile
+    updateUserProfile({
+      name,
+      email,
+      mobile: phone,
+      location,
+      profileImage
+    });
     setIsEditing(false);
     toast.success("Profile updated successfully");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileImage(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeProfileImage = () => {
+    setProfileImage(undefined);
   };
 
   return (
@@ -33,10 +63,46 @@ const Profile = () => {
       <div className="px-4 -mt-16">
         <div className="venti-glass dark:venti-glass-dark rounded-2xl p-6 shadow-sm mb-6">
           <div className="flex flex-col items-center -mt-16 mb-4">
-            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-venti-gray-800 overflow-hidden bg-venti-green-100 dark:bg-venti-green-900/30 flex items-center justify-center mb-3">
-              <User size={48} className="text-venti-green-600 dark:text-venti-green-400" />
+            <div className="relative">
+              <Avatar className="w-24 h-24 border-4 border-white dark:border-venti-gray-800 bg-venti-green-100 dark:bg-venti-green-900/30">
+                {profileImage ? (
+                  <AvatarImage src={profileImage} alt={user?.name || "User"} />
+                ) : (
+                  <AvatarFallback className="text-venti-green-600 dark:text-venti-green-400">
+                    <User size={48} />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              
+              {isEditing && (
+                <div className="absolute -bottom-1 -right-1 flex space-x-1">
+                  <button 
+                    onClick={triggerFileInput}
+                    className="bg-venti-green-500 text-white p-1.5 rounded-full shadow-md hover:bg-venti-green-600 transition-colors"
+                  >
+                    <Upload size={14} />
+                  </button>
+                  
+                  {profileImage && (
+                    <button 
+                      onClick={removeProfileImage}
+                      className="bg-rose-500 text-white p-1.5 rounded-full shadow-md hover:bg-rose-600 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+              )}
             </div>
-            <h2 className="text-xl font-semibold">{user?.name || "User"}</h2>
+            <h2 className="text-xl font-semibold mt-3">{user?.name || "User"}</h2>
             <p className="text-sm text-venti-gray-600 dark:text-venti-gray-400">
               Greenhouse Manager
             </p>

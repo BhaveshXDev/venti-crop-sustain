@@ -6,15 +6,20 @@ interface User {
   id: string;
   email: string;
   name: string;
+  gender?: string;
+  mobile?: string;
+  profileImage?: string;
+  location?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, gender?: string, mobile?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
+  updateUserProfile: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +34,7 @@ const mockLogin = async (email: string, password: string): Promise<User> => {
           id: "1",
           email: "demo@ventigrow.com",
           name: "Demo User",
+          location: "Central Valley, CA",
         });
       } 
       // Added user's credentials as valid login
@@ -37,6 +43,7 @@ const mockLogin = async (email: string, password: string): Promise<User> => {
           id: "2",
           email: "bhaveshsonawane@gmail.com",
           name: "Bhavesh Sonawane",
+          location: "Mumbai, India",
         });
       } 
       // Allow any login for demo purposes with minimum validation
@@ -46,6 +53,7 @@ const mockLogin = async (email: string, password: string): Promise<User> => {
           id: Math.random().toString(36).substring(2, 9),
           email,
           name: name.charAt(0).toUpperCase() + name.slice(1),
+          location: "New Greenhouse Location",
         });
       }
       else {
@@ -58,14 +66,19 @@ const mockLogin = async (email: string, password: string): Promise<User> => {
 const mockSignup = async (
   email: string,
   password: string,
-  name: string
+  name: string,
+  gender?: string,
+  mobile?: string
 ): Promise<User> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        id: "1",
+        id: Math.random().toString(36).substring(2, 9),
         email,
         name,
+        gender,
+        mobile,
+        location: "New User Location",
       });
     }, 1000);
   });
@@ -103,11 +116,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, gender?: string, mobile?: string) => {
     setLoading(true);
     setError(null);
     try {
-      const user = await mockSignup(email, password, name);
+      const user = await mockSignup(email, password, name, gender, mobile);
       setUser(user);
       localStorage.setItem("ventigrow-user", JSON.stringify(user));
       navigate("/dashboard");
@@ -115,6 +128,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateUserProfile = (data: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem("ventigrow-user", JSON.stringify(updatedUser));
     }
   };
 
@@ -126,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, error }}
+      value={{ user, loading, login, signup, logout, error, updateUserProfile }}
     >
       {children}
     </AuthContext.Provider>
