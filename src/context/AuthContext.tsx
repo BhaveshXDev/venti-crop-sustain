@@ -23,13 +23,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const mockLogin = async (email: string, password: string): Promise<User> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
+      // Valid demo account
       if (email === "demo@ventigrow.com" && password === "password") {
         resolve({
           id: "1",
           email: "demo@ventigrow.com",
           name: "Demo User",
         });
-      } else {
+      } 
+      // Added user's credentials as valid login
+      else if (email === "bhaveshsonawane@gmail.com" && password === "Bhavesh@12334") {
+        resolve({
+          id: "2",
+          email: "bhaveshsonawane@gmail.com",
+          name: "Bhavesh Sonawane",
+        });
+      } 
+      // Allow any login for demo purposes with minimum validation
+      else if (email.includes('@') && email.includes('.') && password.length >= 6) {
+        const name = email.split('@')[0];
+        resolve({
+          id: Math.random().toString(36).substring(2, 9),
+          email,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+        });
+      }
+      else {
         reject(new Error("Invalid credentials"));
       }
     }, 1000);
