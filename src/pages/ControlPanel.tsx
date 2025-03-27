@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X, Fan, Thermometer, Droplets, Sliders } from "lucide-react";
+import { Check, X, Fan, Thermometer, Droplets, Sliders, Wind as WindIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navigation from "@/components/Navigation";
 import GaugeChart from "@/components/GaugeChart";
@@ -37,7 +36,6 @@ const ControlPanel = () => {
 
     fetchData();
 
-    // Set up polling for sensor data
     const intervalId = setInterval(fetchData, 30000);
     return () => clearInterval(intervalId);
   }, [user, navigate]);
@@ -60,7 +58,6 @@ const ControlPanel = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-950 dark:to-venti-green-950/40 pb-20">
-      {/* Header */}
       <header className="px-6 pt-6 pb-4">
         <div className="flex justify-between items-center">
           <div>
@@ -72,7 +69,6 @@ const ControlPanel = () => {
         </div>
       </header>
 
-      {/* Tab Navigation */}
       <div className="px-4 mb-4">
         <div className="flex rounded-xl overflow-hidden border border-border">
           <button
@@ -106,9 +102,7 @@ const ControlPanel = () => {
         ) : (
           <>
             {activeTab === "manual" ? (
-              // Manual Control Tab
               <div className="space-y-5">
-                {/* Current readings */}
                 <div className="grid grid-cols-3 gap-3">
                   {sensorData && (
                     <>
@@ -140,7 +134,6 @@ const ControlPanel = () => {
                   )}
                 </div>
 
-                {/* Fan control */}
                 <div className="venti-card p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-medium flex items-center">
@@ -180,7 +173,6 @@ const ControlPanel = () => {
                   </div>
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate("/dashboard")}
@@ -203,7 +195,6 @@ const ControlPanel = () => {
                 </div>
               </div>
             ) : (
-              // Auto Mode Tab
               <div className="space-y-5">
                 <div className="venti-card p-5">
                   <div className="flex items-center mb-4">
@@ -238,7 +229,7 @@ const ControlPanel = () => {
                     
                     <div className="flex items-center justify-between">
                       <span className="flex items-center text-sm">
-                        <Wind size={16} className="mr-1.5 text-emerald-500" />
+                        <WindIcon size={16} className="mr-1.5 text-emerald-500" />
                         CO2 based
                       </span>
                       <label className="relative inline-flex items-center cursor-pointer">
