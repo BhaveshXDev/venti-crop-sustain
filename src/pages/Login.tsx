@@ -119,10 +119,6 @@ const Login = () => {
             Sign up
           </Link>
         </div>
-        
-        <div className="mt-6 text-center text-xs text-venti-gray-500 dark:text-venti-gray-500">
-          <p>Demo credentials: demo@ventigrow.com / password</p>
-        </div>
       </div>
     </div>
   );
