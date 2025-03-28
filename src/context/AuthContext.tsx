@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Session } from "@supabase/supabase-js";
@@ -20,7 +19,14 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, gender?: string, mobile?: string, profileImage?: string) => Promise<void>;
+  signup: (
+    email: string,
+    password: string,
+    name: string,
+    gender?: string,
+    mobile?: string,
+    profileImage?: string
+  ) => Promise<void>;
   logout: () => void;
   error: string | null;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -38,14 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         setSession(currentSession);
         
         if (currentSession?.user) {
           try {
-            // Fetch profile data
             const { data: profileData, error: profileError } = await supabase
               .from("profiles")
               .select("*")
@@ -67,7 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setUser(userProfile);
           } catch (err) {
             console.error("Error fetching user profile:", err);
-            // If profile fetch fails, at least set basic user data
             setUser({
               id: currentSession.user.id,
               email: currentSession.user.email || "",
@@ -82,20 +85,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     );
 
-    // THEN check for existing session
     const initializeAuth = async () => {
       const { data } = await supabase.auth.getSession();
-      
-      // The onAuthStateChange handler above will set the user
       setSession(data.session);
-      
       if (!data.session) {
         setLoading(false);
       }
     };
 
     initializeAuth();
-
     return () => {
       subscription.unsubscribe();
     };
@@ -160,21 +158,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) return;
     
     try {
-      // Update auth metadata if name is provided
       if (data.name) {
         await supabase.auth.updateUser({
           data: { name: data.name }
         });
       }
       
-      // Update profile in the profiles table
       const updates = {
         name: data.name,
         gender: data.gender,
         mobile: data.mobile,
         profile_image_url: data.profileImage,
         location: data.location,
-        updated_at: new Date(),
+        updated_at: new Date().toISOString(), // Fix applied here
       };
       
       const { error } = await supabase
@@ -184,7 +180,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       if (error) throw error;
       
-      // Update local user state
       setUser({ ...user, ...data });
     } catch (err: any) {
       toast.error("Failed to update profile");
