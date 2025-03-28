@@ -1,9 +1,9 @@
-
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,7 +12,14 @@ const Login = () => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +35,20 @@ const Login = () => {
     
     setIsResettingPassword(true);
     
-    // Simulate password reset functionality
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      
+      if (error) throw error;
+      
       toast.success("Password reset instructions sent to your email");
-      setIsResettingPassword(false);
       setShowForgotPasswordModal(false);
-    }, 1500);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset instructions");
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   return (
@@ -143,7 +158,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
       {showForgotPasswordModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="venti-glass dark:venti-glass-dark rounded-xl p-6 w-full max-w-md mx-4">

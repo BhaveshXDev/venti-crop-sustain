@@ -1,12 +1,14 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, Mail, Lock, User, Phone, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
-  const { signup, loading, error } = useAuth();
+  const { signup, loading, error, user } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,6 +17,13 @@ const Signup = () => {
   const [gender, setGender] = useState("");
   const [mobile, setMobile] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +39,13 @@ const Signup = () => {
     }
 
     try {
-      await signup(email, password, name, gender, mobile);
+      await signup(email, password, name, gender, mobile, profileImage || undefined);
     } catch (err) {
       console.error("Signup error:", err);
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {

@@ -1,8 +1,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface User {
+interface UserProfile {
   id: string;
   email: string;
   name: string;
@@ -13,106 +16,106 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
+  session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, gender?: string, mobile?: string, profileImage?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
-  updateUserProfile: (data: Partial<User>) => void;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock authentication functions for demo
-const mockLogin = async (email: string, password: string): Promise<User> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Valid demo account
-      if (email === "demo@ventigrow.com" && password === "password") {
-        resolve({
-          id: "1",
-          email: "demo@ventigrow.com",
-          name: "Demo User",
-          location: "Central Valley, CA",
-        });
-      } 
-      // Added user's credentials as valid login
-      else if (email === "bhaveshsonawane@gmail.com" && password === "Bhavesh@12334") {
-        resolve({
-          id: "2",
-          email: "bhaveshsonawane@gmail.com",
-          name: "Bhavesh Sonawane",
-          location: "Mumbai, India",
-        });
-      } 
-      // Allow any login for demo purposes with minimum validation
-      else if (email.includes('@') && email.includes('.') && password.length >= 6) {
-        const name = email.split('@')[0];
-        resolve({
-          id: Math.random().toString(36).substring(2, 9),
-          email,
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          location: "New Greenhouse Location",
-        });
-      }
-      else {
-        reject(new Error("Invalid credentials"));
-      }
-    }, 1000);
-  });
-};
-
-const mockSignup = async (
-  email: string,
-  password: string,
-  name: string,
-  gender?: string,
-  mobile?: string,
-  profileImage?: string
-): Promise<User> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: Math.random().toString(36).substring(2, 9),
-        email,
-        name,
-        gender,
-        mobile,
-        profileImage,
-        location: "New User Location",
-      });
-    }, 1000);
-  });
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem("ventigrow-user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        
+        if (currentSession?.user) {
+          try {
+            // Fetch profile data
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", currentSession.user.id)
+              .single();
+              
+            if (profileError) throw profileError;
+            
+            const userProfile: UserProfile = {
+              id: currentSession.user.id,
+              email: currentSession.user.email || "",
+              name: profileData?.name || "",
+              gender: profileData?.gender || undefined,
+              mobile: profileData?.mobile || undefined,
+              profileImage: profileData?.profile_image_url || undefined,
+              location: profileData?.location || undefined,
+            };
+            
+            setUser(userProfile);
+          } catch (err) {
+            console.error("Error fetching user profile:", err);
+            // If profile fetch fails, at least set basic user data
+            setUser({
+              id: currentSession.user.id,
+              email: currentSession.user.email || "",
+              name: "",
+            });
+          }
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      // The onAuthStateChange handler above will set the user
+      setSession(data.session);
+      
+      if (!data.session) {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     try {
-      const user = await mockLogin(email, password);
-      setUser(user);
-      localStorage.setItem("ventigrow-user", JSON.stringify(user));
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
       navigate("/dashboard");
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -129,34 +132,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     setError(null);
     try {
-      const user = await mockSignup(email, password, name, gender, mobile, profileImage);
-      setUser(user);
-      localStorage.setItem("ventigrow-user", JSON.stringify(user));
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            gender,
+            mobile,
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Sign up successful! Please check your email for verification.");
       navigate("/dashboard");
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || "Signup failed");
+      toast.error(err.message || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateUserProfile = (data: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem("ventigrow-user", JSON.stringify(updatedUser));
+  const updateUserProfile = async (data: Partial<UserProfile>) => {
+    if (!user) return;
+    
+    try {
+      // Update auth metadata if name is provided
+      if (data.name) {
+        await supabase.auth.updateUser({
+          data: { name: data.name }
+        });
+      }
+      
+      // Update profile in the profiles table
+      const updates = {
+        name: data.name,
+        gender: data.gender,
+        mobile: data.mobile,
+        profile_image_url: data.profileImage,
+        location: data.location,
+        updated_at: new Date(),
+      };
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update local user state
+      setUser({ ...user, ...data });
+    } catch (err: any) {
+      toast.error("Failed to update profile");
+      console.error("Error updating profile:", err);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("ventigrow-user");
+  const logout = async () => {
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, error, updateUserProfile }}
+      value={{ user, session, loading, login, signup, logout, error, updateUserProfile }}
     >
       {children}
     </AuthContext.Provider>

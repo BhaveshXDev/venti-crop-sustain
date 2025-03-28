@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import ControlPanel from "./pages/ControlPanel";
 import Settings from "./pages/Settings";
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/control" element={<ControlPanel />} />
                 <Route path="/settings" element={<Settings />} />
