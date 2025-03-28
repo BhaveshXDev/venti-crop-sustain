@@ -125,7 +125,7 @@ const ControlPanel = () => {
                       <GaugeChart
                         value={Math.round(sensorData.co2 / 10)}
                         min={0}
-                         
+                        max={120}
                         title="CO2"
                         unit="x10ppm"
                         thresholds={{ warning: 70, critical: 90 }}

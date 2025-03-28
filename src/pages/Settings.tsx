@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Bell, Moon, Sun, LogOut } from "lucide-react";
@@ -32,7 +33,7 @@ const Settings = () => {
   const toggleTheme = () => {
     setDarkMode((prevMode) => {
       const newMode = !prevMode;
-      localStorage.setItem("darkMode", newMode);
+      localStorage.setItem("darkMode", String(newMode));
       if (newMode) {
         document.documentElement.classList.add("dark");
       } else {
