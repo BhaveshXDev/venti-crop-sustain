@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Calendar, CalendarCheckIcon, CalendarIcon, ArrowRight, Calendar as CalendarIcon2, Strawberry } from "lucide-react";
+import { Calendar, CalendarCheckIcon, CalendarIcon, ArrowRight, Calendar as CalendarIcon2, Apple } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -78,7 +78,7 @@ const Crops = () => {
     {
       id: "strawberries",
       name: "Strawberries",
-      icon: <Strawberry size={16} className="text-red-500" />,
+      icon: <Apple size={16} className="text-red-500" />,
       image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?q=80&w=500&auto=format&fit=crop",
       color: "bg-red-400",
       sowingTime: "April - May",
