@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, gender?: string, mobile?: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, gender?: string, mobile?: string, profileImage?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
   updateUserProfile: (data: Partial<User>) => void;
@@ -68,7 +68,8 @@ const mockSignup = async (
   password: string,
   name: string,
   gender?: string,
-  mobile?: string
+  mobile?: string,
+  profileImage?: string
 ): Promise<User> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -78,6 +79,7 @@ const mockSignup = async (
         name,
         gender,
         mobile,
+        profileImage,
         location: "New User Location",
       });
     }, 1000);
@@ -116,11 +118,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signup = async (email: string, password: string, name: string, gender?: string, mobile?: string) => {
+  const signup = async (
+    email: string, 
+    password: string, 
+    name: string, 
+    gender?: string, 
+    mobile?: string,
+    profileImage?: string
+  ) => {
     setLoading(true);
     setError(null);
     try {
-      const user = await mockSignup(email, password, name, gender, mobile);
+      const user = await mockSignup(email, password, name, gender, mobile, profileImage);
       setUser(user);
       localStorage.setItem("ventigrow-user", JSON.stringify(user));
       navigate("/dashboard");

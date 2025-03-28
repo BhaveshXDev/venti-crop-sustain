@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Mail, User, Building, MapPin, Phone, Leaf, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navigation from "@/components/Navigation";
@@ -19,26 +18,25 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState<string | undefined>(user?.profileImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSaveProfile = () => {
-    // In a real app, this would update the user profile
-    updateUserProfile({
-      name,
-      email,
-      mobile: phone,
-      location,
-      profileImage
-    });
-    setIsEditing(false);
-    toast.success("Profile updated successfully");
-  };
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setProfileImage(result);
+        if (result) {
+          updateUserProfile({ profileImage: result });
+          toast.success("Profile image updated successfully");
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read image file");
       };
       reader.readAsDataURL(file);
     }
@@ -52,14 +50,35 @@ const Profile = () => {
     setProfileImage(undefined);
   };
 
+  const handleSaveProfile = () => {
+    if (!name.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    
+    if (!email.includes('@') || !email.includes('.')) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    
+    updateUserProfile({
+      name,
+      email,
+      mobile: phone,
+      location,
+      profileImage
+    });
+    
+    setIsEditing(false);
+    toast.success("Profile updated successfully");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-950 dark:to-venti-green-950/40 pb-20">
-      {/* Header */}
       <div className="relative h-48 bg-gradient-to-r from-venti-green-600 to-venti-green-400">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1501854140801-50d01698950b')] bg-cover bg-center opacity-20"></div>
       </div>
 
-      {/* Profile Content */}
       <div className="px-4 -mt-16">
         <div className="venti-glass dark:venti-glass-dark rounded-2xl p-6 shadow-sm mb-6">
           <div className="flex flex-col items-center -mt-16 mb-4">
@@ -261,7 +280,6 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Greenhouse Information */}
         <div className="venti-card p-5 mb-8">
           <h3 className="text-base font-medium flex items-center mb-4">
             <Leaf size={18} className="mr-2 text-venti-green-500" />
