@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Bell, Moon, Sun, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -21,10 +20,26 @@ const Settings = () => {
   const [co2Min, setCo2Min] = useState(400);
   const [co2Max, setCo2Max] = useState(800);
 
+  // Load dark mode preference from localStorage
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("darkMode");
+    if (storedTheme === "true") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
   const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    // In a real app, you would apply the theme change here
-    // document.documentElement.classList.toggle('dark');
+    setDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem("darkMode", newMode);
+      if (newMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      return newMode;
+    });
   };
 
   const saveTemperatureThresholds = async () => {
@@ -98,148 +113,9 @@ const Settings = () => {
                 <div className="w-11 h-6 bg-venti-gray-200 peer-focus:outline-none rounded-full peer dark:bg-venti-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venti-green-500"></div>
               </label>
             </div>
-            
-            <div className="flex items-center justify-between p-4 hover:bg-venti-gray-50 dark:hover:bg-venti-gray-800/30 transition-colors border-b border-border/50">
-              <div className="flex items-center">
-                <Bell size={18} className="mr-3 text-venti-green-500" />
-                <span>Push Notifications</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={notifications}
-                  onChange={() => setNotifications(!notifications)}
-                />
-                <div className="w-11 h-6 bg-venti-gray-200 peer-focus:outline-none rounded-full peer dark:bg-venti-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venti-green-500"></div>
-              </label>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 hover:bg-venti-gray-50 dark:hover:bg-venti-gray-800/30 transition-colors">
-              <div className="flex items-center">
-                <Bell size={18} className="mr-3 text-blue-500" />
-                <span>Email Alerts</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={emailAlerts}
-                  onChange={() => setEmailAlerts(!emailAlerts)}
-                />
-                <div className="w-11 h-6 bg-venti-gray-200 peer-focus:outline-none rounded-full peer dark:bg-venti-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venti-green-500"></div>
-              </label>
-            </div>
           </div>
         </div>
 
-        {/* Threshold Settings */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-venti-gray-600 dark:text-venti-gray-300 px-1 mb-1">
-            Environmental Thresholds
-          </h3>
-          
-          <div className="venti-card p-4 space-y-4">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-sm">Temperature</span>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={tempMin}
-                    onChange={(e) => setTempMin(parseInt(e.target.value))}
-                    min={10}
-                    max={tempMax - 1}
-                  />
-                  <span className="text-venti-gray-500">-</span>
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={tempMax}
-                    onChange={(e) => setTempMax(parseInt(e.target.value))}
-                    min={tempMin + 1}
-                    max={35}
-                  />
-                  <span className="text-sm">°C</span>
-                </div>
-              </div>
-              <button 
-                className="venti-button-outline text-xs w-full py-1.5 mt-1"
-                onClick={saveTemperatureThresholds}
-              >
-                Save
-              </button>
-            </div>
-            
-            <div className="pt-2">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm">Humidity</span>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={humidityMin}
-                    onChange={(e) => setHumidityMin(parseInt(e.target.value))}
-                    min={30}
-                    max={humidityMax - 5}
-                  />
-                  <span className="text-venti-gray-500">-</span>
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={humidityMax}
-                    onChange={(e) => setHumidityMax(parseInt(e.target.value))}
-                    min={humidityMin + 5}
-                    max={90}
-                  />
-                  <span className="text-sm">%</span>
-                </div>
-              </div>
-              <button 
-                className="venti-button-outline text-xs w-full py-1.5 mt-1"
-                onClick={saveHumidityThresholds}
-              >
-                Save
-              </button>
-            </div>
-            
-            <div className="pt-2">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm">CO2 Level</span>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={co2Min}
-                    onChange={(e) => setCo2Min(parseInt(e.target.value))}
-                    min={300}
-                    max={co2Max - 100}
-                    step={50}
-                  />
-                  <span className="text-venti-gray-500">-</span>
-                  <input 
-                    type="number" 
-                    className="venti-input w-16 py-1 text-center text-sm"
-                    value={co2Max}
-                    onChange={(e) => setCo2Max(parseInt(e.target.value))}
-                    min={co2Min + 100}
-                    max={1500}
-                    step={50}
-                  />
-                  <span className="text-sm">ppm</span>
-                </div>
-              </div>
-              <button 
-                className="venti-button-outline text-xs w-full py-1.5 mt-1"
-                onClick={saveCO2Thresholds}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-        
         {/* Account Actions */}
         <div className="space-y-2 mt-6">
           <h3 className="text-sm font-medium text-venti-gray-600 dark:text-venti-gray-300 px-1 mb-1">
