@@ -105,32 +105,32 @@ const ControlPanel = () => {
               <div className="space-y-5">
                 <div className="grid grid-cols-3 gap-3">
                   {sensorData && (
-                    // <>
-                    //   <GaugeChart
-                    //     value={Math.round(sensorData.temperature)}
-                    //     min={10}
-                    //     max={35}
-                    //     title="Temp"
-                    //     unit="°C"
-                    //     thresholds={{ warning: 60, critical: 80 }}
-                    //   />
-                    //   <GaugeChart
-                    //     value={Math.round(sensorData.humidity)}
-                    //     min={0}
-                    //     max={100}
-                    //     title="Humidity"
-                    //     unit="%"
-                    //     thresholds={{ warning: 70, critical: 85 }}
-                    //   />
-                    //   <GaugeChart
-                    //     value={Math.round(sensorData.co2 / 10)}
-                    //     min={0}
-                    //     max={120}
-                    //     title="CO2"
-                    //     unit="10ppm"
-                    //     thresholds={{ warning: 70, critical: 90 }}
-                    //   />
-                    // </>
+                    <>
+                      <GaugeChart
+                        value={Math.round(sensorData.temperature)}
+                        min={10}
+                        max={35}
+                        title="Temp"
+                        unit="°C"
+                        thresholds={{ warning: 60, critical: 80 }}
+                      />
+                      <GaugeChart
+                        value={Math.round(sensorData.humidity)}
+                        min={0}
+                        max={100}
+                        title="Humidity"
+                        unit="%"
+                        thresholds={{ warning: 70, critical: 85 }}
+                      />
+                      <GaugeChart
+                        value={Math.round(sensorData.co2 / 10)}
+                        min={0}
+                         
+                        title="CO2"
+                        unit="x10ppm"
+                        thresholds={{ warning: 70, critical: 90 }}
+                      />
+                    </>
                   )}
                 </div>
 
