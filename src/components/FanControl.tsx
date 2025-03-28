@@ -83,7 +83,7 @@ const FanControl: React.FC<FanControlProps> = ({ className }) => {
           <button
             onClick={handleTurnOff}
             className={cn(
-              "venti-button-outline py-2 text-sm flex-1",
+              "venti-button-outline py-1 px-3 text-xs flex-1",
               speed === 0 ? "bg-venti-gray-200 dark:bg-venti-gray-700" : ""
             )}
             disabled={isUpdating}
@@ -93,7 +93,7 @@ const FanControl: React.FC<FanControlProps> = ({ className }) => {
           <button
             onClick={handleTurnOn}
             className={cn(
-              "venti-button-primary py-2 text-sm flex-1",
+              "venti-button-primary py-1 px-3 text-xs flex-1",
               speed > 0 ? "bg-venti-green-600" : ""
             )}
             disabled={isUpdating}

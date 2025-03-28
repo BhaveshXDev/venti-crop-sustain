@@ -90,14 +90,22 @@
     @apply border-border;
   }
 
+  html, body {
+    @apply min-h-screen;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  #root {
+    @apply min-h-screen flex flex-col;
   }
 }
 
 @layer components {
   .venti-card {
-    @apply bg-white/80 backdrop-blur-md rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-white/80 backdrop-blur-md rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-venti-gray-800/80 dark:border-venti-gray-700/50;
   }
 
   .venti-input {
@@ -117,7 +125,7 @@
   }
 
   .venti-button-outline {
-    @apply venti-button border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-6;
+    @apply venti-button border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-6 dark:bg-venti-gray-800 dark:border-venti-gray-700 dark:hover:bg-venti-gray-700;
   }
 
   .venti-button-ghost {
@@ -129,7 +137,7 @@
   }
 
   .venti-logo-text {
-    @apply font-serif text-venti-gray-800 tracking-wide;
+    @apply font-serif text-venti-gray-800 tracking-wide dark:text-venti-gray-100;
   }
 
   .venti-glass {
@@ -165,4 +173,23 @@
   .font-serif {
     font-family: 'Playfair Display', serif;
   }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }

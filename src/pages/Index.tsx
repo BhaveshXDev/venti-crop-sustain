@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const Index = () => {
       setTimeout(() => {
         navigate("/login");
       }, 500);
-    }, 4000); // Changed from 2500 to 4000 milliseconds (4 seconds)
+    }, 4000); // Set to exactly 4 seconds
 
     return () => clearTimeout(timer);
   }, [navigate, user]);
@@ -43,6 +44,8 @@ const Index = () => {
           Smart Agriculture Ventilation System
         </p>
       </div>
+      
+      <Footer />
     </div>
   );
 };

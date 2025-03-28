@@ -7,6 +7,7 @@ import CropCard from "@/components/CropCard";
 import CropDetails from "@/components/CropDetails";
 import CropDatePicker from "@/components/CropDatePicker";
 import { Plus } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const Crops = () => {
   const [selectedCrop, setSelectedCrop] = useState<CropInfo | null>(null);
@@ -17,7 +18,7 @@ const Crops = () => {
   const cropList = getCropList();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-950 dark:to-venti-green-950/40 p-4 pt-6 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-white to-venti-green-50 dark:from-venti-gray-950 dark:to-venti-green-950/40 p-4 pt-6 pb-24 flex flex-col">
       <h1 className="text-2xl font-semibold mb-6 text-center">Crops Management</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
@@ -57,7 +58,6 @@ const Crops = () => {
         </div>
       )}
 
-      {/* Add/Edit Crop Modal would go here */}
       {showAddCrop && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="venti-glass dark:venti-glass-dark rounded-2xl p-5 max-w-md w-full">
@@ -75,6 +75,8 @@ const Crops = () => {
         </div>
       )}
 
+      <div className="flex-grow"></div>
+      <Footer />
       <Navigation />
     </div>
   );
