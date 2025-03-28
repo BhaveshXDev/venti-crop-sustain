@@ -127,7 +127,7 @@ const ControlPanel = () => {
                         min={0}
                         max={120}
                         title="CO2"
-                        unit="x10ppm"
+                        unit="10ppm"
                         thresholds={{ warning: 70, critical: 90 }}
                       />
                     </>
