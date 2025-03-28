@@ -17,13 +17,27 @@ const FanControl: React.FC<FanControlProps> = ({ className }) => {
     setSpeed(parseInt(e.target.value));
   };
 
-  const handleFanUpdate = async () => {
+  const handleTurnOn = async () => {
+    setSpeed(100);
     setIsUpdating(true);
     try {
-      await setFanSpeed(speed);
-      toast.success(`Fan speed set to ${speed}%`);
+      await setFanSpeed(100);
+      toast.success("Fan turned ON");
     } catch (error) {
-      toast.error("Failed to update fan speed");
+      toast.error("Failed to turn fan on");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleTurnOff = async () => {
+    setSpeed(0);
+    setIsUpdating(true);
+    try {
+      await setFanSpeed(0);
+      toast.success("Fan turned OFF");
+    } catch (error) {
+      toast.error("Failed to turn fan off");
     } finally {
       setIsUpdating(false);
     }
@@ -67,35 +81,26 @@ const FanControl: React.FC<FanControlProps> = ({ className }) => {
         
         <div className="flex justify-between gap-2">
           <button
-            onClick={() => setSpeed(0)}
-            className="venti-button-outline py-1 text-xs flex-1"
+            onClick={handleTurnOff}
+            className={cn(
+              "venti-button-outline py-2 text-sm flex-1",
+              speed === 0 ? "bg-venti-gray-200 dark:bg-venti-gray-700" : ""
+            )}
             disabled={isUpdating}
           >
-            Off
+            OFF
           </button>
           <button
-            onClick={() => setSpeed(50)}
-            className="venti-button-outline py-1 text-xs flex-1"
+            onClick={handleTurnOn}
+            className={cn(
+              "venti-button-primary py-2 text-sm flex-1",
+              speed > 0 ? "bg-venti-green-600" : ""
+            )}
             disabled={isUpdating}
           >
-            50%
-          </button>
-          <button
-            onClick={() => setSpeed(100)}
-            className="venti-button-outline py-1 text-xs flex-1"
-            disabled={isUpdating}
-          >
-            100%
+            ON
           </button>
         </div>
-        
-        <button
-          onClick={handleFanUpdate}
-          className="venti-button-primary w-full py-2"
-          disabled={isUpdating}
-        >
-          {isUpdating ? "Updating..." : "Apply Changes"}
-        </button>
       </div>
     </div>
   );

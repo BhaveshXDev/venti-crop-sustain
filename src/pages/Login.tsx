@@ -3,16 +3,37 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { login, loading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await login(email, password);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordEmail.includes('@') || !forgotPasswordEmail.includes('.')) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    
+    setIsResettingPassword(true);
+    
+    // Simulate password reset functionality
+    setTimeout(() => {
+      toast.success("Password reset instructions sent to your email");
+      setIsResettingPassword(false);
+      setShowForgotPasswordModal(false);
+    }, 1500);
   };
 
   return (
@@ -90,12 +111,13 @@ const Login = () => {
             </div>
 
             <div className="text-right">
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(true)}
                 className="text-sm text-venti-green-600 dark:text-venti-green-400 hover:underline"
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
@@ -120,6 +142,62 @@ const Login = () => {
           </Link>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="venti-glass dark:venti-glass-dark rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-xl font-medium mb-4">Reset Password</h3>
+            <p className="text-sm text-venti-gray-600 dark:text-venti-gray-400 mb-4">
+              Enter your email address and we'll send you instructions to reset your password.
+            </p>
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="reset-email" className="venti-label">
+                  Email
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-venti-gray-400">
+                    <Mail size={18} />
+                  </div>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="venti-input pl-10 w-full"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(false)}
+                  className="venti-button-outline flex-1"
+                  disabled={isResettingPassword}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="venti-button-primary flex-1"
+                  disabled={isResettingPassword}
+                >
+                  {isResettingPassword ? "Sending..." : "Send Instructions"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
+        <p>© {new Date().getFullYear()} VentriGrow. All rights reserved.</p>
+      </footer>
     </div>
   );
 };

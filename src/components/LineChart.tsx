@@ -22,6 +22,8 @@ interface LineChartProps {
   }>;
   title: string;
   className?: string;
+  timePeriod?: string;
+  onTimePeriodChange?: (period: string) => void;
 }
 
 const LineChart: React.FC<LineChartProps> = ({
@@ -30,12 +32,55 @@ const LineChart: React.FC<LineChartProps> = ({
   yKeys,
   title,
   className,
+  timePeriod = "24h",
+  onTimePeriodChange,
 }) => {
   return (
     <div className={cn("venti-card p-4", className)}>
-      <h3 className="text-sm font-medium text-venti-gray-600 dark:text-venti-gray-300 mb-3">
-        {title}
-      </h3>
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-sm font-medium text-venti-gray-600 dark:text-venti-gray-300">
+          {title}
+        </h3>
+        
+        {onTimePeriodChange && (
+          <div className="flex text-xs bg-venti-gray-100 dark:bg-venti-gray-800 rounded-lg overflow-hidden">
+            <button 
+              className={cn(
+                "px-2 py-1 transition-colors",
+                timePeriod === "24h" 
+                  ? "bg-venti-green-500 text-white" 
+                  : "hover:bg-venti-gray-200 dark:hover:bg-venti-gray-700"
+              )}
+              onClick={() => onTimePeriodChange("24h")}
+            >
+              24h
+            </button>
+            <button 
+              className={cn(
+                "px-2 py-1 transition-colors",
+                timePeriod === "7d" 
+                  ? "bg-venti-green-500 text-white" 
+                  : "hover:bg-venti-gray-200 dark:hover:bg-venti-gray-700"
+              )}
+              onClick={() => onTimePeriodChange("7d")}
+            >
+              7d
+            </button>
+            <button 
+              className={cn(
+                "px-2 py-1 transition-colors",
+                timePeriod === "30d" 
+                  ? "bg-venti-green-500 text-white" 
+                  : "hover:bg-venti-gray-200 dark:hover:bg-venti-gray-700"
+              )}
+              onClick={() => onTimePeriodChange("30d")}
+            >
+              30d
+            </button>
+          </div>
+        )}
+      </div>
+      
       <div className="w-full h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
           <RechartsLineChart

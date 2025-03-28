@@ -19,7 +19,7 @@ const Index = () => {
       setTimeout(() => {
         navigate("/login");
       }, 500);
-    }, 2500);
+    }, 4000); // Changed from 2500 to 4000 milliseconds (4 seconds)
 
     return () => clearTimeout(timer);
   }, [navigate, user]);

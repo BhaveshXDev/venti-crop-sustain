@@ -69,6 +69,7 @@ export const fetchCurrentSensorData = (): Promise<SensorData> => {
   });
 };
 
+// Last 24 hours data - hourly intervals
 export const fetchHistoricalSensorData = (): Promise<SensorData[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -82,6 +83,56 @@ export const fetchHistoricalSensorData = (): Promise<SensorData[]> => {
           humidity: 55 + Math.random() * 20,
           co2: 400 + Math.random() * 200,
           timestamp,
+        });
+      }
+      
+      resolve(data);
+    }, 800);
+  });
+};
+
+// Last 7 days data - daily average
+export const fetchHistoricalSensorDataDaily = (): Promise<SensorData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const data: SensorData[] = [];
+      const now = new Date();
+      
+      for (let i = 7; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        date.setHours(12, 0, 0, 0); // Set to noon each day
+        
+        data.push({
+          temperature: 22 + Math.random() * 4,
+          humidity: 55 + Math.random() * 15,
+          co2: 400 + Math.random() * 180,
+          timestamp: date.toISOString(),
+        });
+      }
+      
+      resolve(data);
+    }, 800);
+  });
+};
+
+// Last 30 days data - daily average
+export const fetchHistoricalSensorDataMonthly = (): Promise<SensorData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const data: SensorData[] = [];
+      const now = new Date();
+      
+      for (let i = 30; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        date.setHours(12, 0, 0, 0); // Set to noon each day
+        
+        data.push({
+          temperature: 22 + Math.sin(i / 5) * 5, // Create some cyclical pattern
+          humidity: 55 + Math.cos(i / 6) * 15,
+          co2: 400 + Math.sin(i / 4) * 180,
+          timestamp: date.toISOString(),
         });
       }
       

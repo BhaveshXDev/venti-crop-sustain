@@ -8,7 +8,17 @@ import MetricCard from "@/components/MetricCard";
 import FanControl from "@/components/FanControl";
 import LineChart from "@/components/LineChart";
 import WeatherWidget from "@/components/WeatherWidget";
-import { fetchCurrentSensorData, fetchHistoricalSensorData, fetchWeatherData, SensorData, WeatherData } from "@/utils/api";
+import { 
+  fetchCurrentSensorData, 
+  fetchHistoricalSensorData, 
+  fetchWeatherData, 
+  SensorData, 
+  WeatherData,
+  fetchHistoricalSensorDataDaily,
+  fetchHistoricalSensorDataMonthly 
+} from "@/utils/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -17,6 +27,8 @@ const Dashboard = () => {
   const [historicalData, setHistoricalData] = useState<SensorData[]>([]);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<string>("24h");
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -27,14 +39,15 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [current, historical, weather] = await Promise.all([
+        const [current, weather] = await Promise.all([
           fetchCurrentSensorData(),
-          fetchHistoricalSensorData(),
           fetchWeatherData(),
         ]);
         setCurrentData(current);
-        setHistoricalData(historical);
         setWeatherData(weather);
+        
+        // Fetch historical data based on selected time period
+        await fetchHistoricalDataByPeriod(timePeriod);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -51,15 +64,51 @@ const Dashboard = () => {
     }, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
-  }, [user, navigate]);
+  }, [user, navigate, timePeriod]);
+
+  const fetchHistoricalDataByPeriod = async (period: string) => {
+    try {
+      let data;
+      switch (period) {
+        case "24h":
+          data = await fetchHistoricalSensorData();
+          break;
+        case "7d":
+          data = await fetchHistoricalSensorDataDaily();
+          break;
+        case "30d":
+          data = await fetchHistoricalSensorDataMonthly();
+          break;
+        default:
+          data = await fetchHistoricalSensorData();
+      }
+      setHistoricalData(data);
+    } catch (error) {
+      console.error("Error fetching historical data:", error);
+    }
+  };
+
+  const handleTimePeriodChange = (period: string) => {
+    setTimePeriod(period);
+  };
 
   // Transform historical data for the chart
   const chartData = historicalData.map((item) => {
     const date = new Date(item.timestamp);
-    const hour = date.getHours();
-    const minute = date.getMinutes();
+    const format = (date: Date) => {
+      if (timePeriod === "24h") {
+        const hour = date.getHours();
+        const minute = date.getMinutes();
+        return `${hour}:${minute < 10 ? '0' + minute : minute}`;
+      } else if (timePeriod === "7d") {
+        return date.toLocaleDateString(undefined, { weekday: 'short' });
+      } else {
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+    };
+    
     return {
-      timestamp: `${hour}:${minute < 10 ? '0' + minute : minute}`,
+      timestamp: format(date),
       temperature: item.temperature,
       humidity: item.humidity,
       co2: item.co2 / 10, // Scale down CO2 to fit better with other metrics
@@ -90,16 +139,41 @@ const Dashboard = () => {
       {/* Header */}
       <header className="px-6 pt-6 pb-4">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-semibold">Dashboard</h1>
-            <p className="text-sm text-venti-gray-600 dark:text-venti-gray-400">
-              Welcome back, {user?.name || "User"}
-            </p>
+          <div className="flex items-center">
+            <Avatar className="w-10 h-10 mr-3">
+              {user?.profileImage ? (
+                <AvatarImage src={user.profileImage} alt={user.name || "User"} />
+              ) : (
+                <AvatarFallback className="bg-venti-green-100 dark:bg-venti-green-900/50 text-venti-green-600 dark:text-venti-green-400">
+                  <User size={20} />
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <h1 className="text-xl font-semibold">Dashboard</h1>
+              <p className="text-sm text-venti-gray-600 dark:text-venti-gray-400">
+                Welcome back, {user?.name || "User"}
+              </p>
+            </div>
           </div>
-          <button className="venti-button-ghost relative">
-            <Bell size={22} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-venti-green-500 rounded-full"></span>
-          </button>
+          <div className="relative">
+            <button 
+              className="venti-button-ghost relative"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <Bell size={22} />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-venti-green-500 rounded-full"></span>
+            </button>
+            
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-venti-gray-800 shadow-lg rounded-xl p-3 z-10 border border-venti-gray-200 dark:border-venti-gray-700">
+                <h3 className="font-medium text-sm mb-2">Notifications</h3>
+                <div className="text-xs text-venti-gray-600 dark:text-venti-gray-400 p-2 text-center">
+                  No new notifications
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -152,7 +226,7 @@ const Dashboard = () => {
             {/* Historical data chart */}
             {chartData.length > 0 && (
               <LineChart
-                data={chartData.slice(-12)} // Show last 12 data points
+                data={timePeriod === "24h" ? chartData.slice(-12) : chartData} // Show all data for longer periods
                 xKey="timestamp"
                 yKeys={[
                   { key: "temperature", color: "#ef4444", name: "Temp (°C)" },
@@ -160,6 +234,8 @@ const Dashboard = () => {
                   { key: "co2", color: "#10b981", name: "CO2 (x10 ppm)" },
                 ]}
                 title="Historical Data"
+                timePeriod={timePeriod}
+                onTimePeriodChange={handleTimePeriodChange}
               />
             )}
 
@@ -193,6 +269,10 @@ const Dashboard = () => {
       </main>
 
       <Navigation />
+      
+      <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-venti-gray-900/80 backdrop-blur-sm z-10 border-t border-venti-gray-100 dark:border-venti-gray-800">
+        <p>© {new Date().getFullYear()} VentriGrow. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
