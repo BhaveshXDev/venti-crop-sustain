@@ -5,7 +5,8 @@ import React from "react";
 export interface CropInfo {
   id: string;
   name: string;
-  icon: React.ReactNode;
+  icon: string;
+  iconColor: string;
   image: string;
   color: string;
   sowingTime: string;
@@ -26,7 +27,8 @@ export const getCropList = (): CropInfo[] => [
   {
     id: "tomatoes",
     name: "Tomatoes",
-    icon: <div className="w-4 h-4 bg-red-500 rounded-full"></div>,
+    icon: "circle",
+    iconColor: "bg-red-500",
     image: "https://images.unsplash.com/photo-1592924357229-fee9be4d732a?q=80&w=500&auto=format&fit=crop",
     color: "bg-red-500",
     sowingTime: "March - April",
@@ -45,7 +47,8 @@ export const getCropList = (): CropInfo[] => [
   {
     id: "cucumbers",
     name: "Cucumbers",
-    icon: <div className="w-4 h-4 bg-green-500 rounded-full"></div>,
+    icon: "circle",
+    iconColor: "bg-green-500",
     image: "https://images.unsplash.com/photo-1558560629-b4cb5372d2a6?q=80&w=500&auto=format&fit=crop",
     color: "bg-green-500",
     sowingTime: "April - May",
@@ -64,7 +67,8 @@ export const getCropList = (): CropInfo[] => [
   {
     id: "peppers",
     name: "Peppers",
-    icon: <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>,
+    icon: "circle",
+    iconColor: "bg-yellow-500",
     image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?q=80&w=500&auto=format&fit=crop",
     color: "bg-yellow-500",
     sowingTime: "February - March",
@@ -83,7 +87,8 @@ export const getCropList = (): CropInfo[] => [
   {
     id: "strawberries",
     name: "Strawberries",
-    icon: <Apple size={16} className="text-red-500" />,
+    icon: "apple",
+    iconColor: "text-red-500",
     image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?q=80&w=500&auto=format&fit=crop",
     color: "bg-red-400",
     sowingTime: "April - May",
@@ -102,7 +107,8 @@ export const getCropList = (): CropInfo[] => [
   {
     id: "chilies",
     name: "Chilies",
-    icon: <div className="w-4 h-4 bg-red-600 rounded-full"></div>,
+    icon: "circle",
+    iconColor: "bg-red-600",
     image: "https://images.unsplash.com/photo-1635322966219-b75ed372eb01?q=80&w=500&auto=format&fit=crop",
     color: "bg-red-600",
     sowingTime: "February - March",

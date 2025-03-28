@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CalendarCheckIcon, Calendar, Thermometer, Droplets } from "lucide-react";
+import { CalendarCheckIcon, Calendar, Thermometer, Droplets, Circle, Apple } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CropInfo, getStageColor, getDateStatus } from "@/utils/cropData";
 import { format } from "date-fns";
@@ -11,6 +11,15 @@ interface CropDetailsProps {
 }
 
 const CropDetails: React.FC<CropDetailsProps> = ({ crop, selectedDate }) => {
+  // Render the appropriate icon based on the icon property
+  const renderIcon = () => {
+    if (crop.icon === "apple") {
+      return <Apple size={16} className={crop.iconColor} />;
+    } else {
+      return <div className={`w-4 h-4 ${crop.iconColor} rounded-full`}></div>;
+    }
+  };
+
   return (
     <div className="venti-glass dark:venti-glass-dark rounded-2xl p-5 mb-6">
       <div className="flex items-center mb-4">

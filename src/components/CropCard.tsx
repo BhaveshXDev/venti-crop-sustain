@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Circle, Apple } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CropInfo } from "@/utils/cropData";
 
@@ -11,6 +11,15 @@ interface CropCardProps {
 }
 
 const CropCard: React.FC<CropCardProps> = ({ crop, isSelected, onClick }) => {
+  // Render the appropriate icon based on the icon property
+  const renderIcon = () => {
+    if (crop.icon === "apple") {
+      return <Apple size={16} className={crop.iconColor} />;
+    } else {
+      return <div className={`w-4 h-4 ${crop.iconColor} rounded-full`}></div>;
+    }
+  };
+
   return (
     <div
       className={`venti-glass dark:venti-glass-dark rounded-xl p-4 flex items-center cursor-pointer transition-all ${
