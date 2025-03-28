@@ -87,11 +87,13 @@ const CropDatePicker: React.FC<CropDatePickerProps> = ({
             today: "bg-venti-gray-100 text-venti-gray-900 dark:bg-venti-gray-800 dark:text-white"
           }}
           components={{
-            DayContent: ({ day }) => {
-              const customClass = getDayClass(day);
+            DayContent: (props) => {
+              // Fix: Access the date from props correctly
+              const date = props.date;
+              const customClass = getDayClass(date);
               return (
                 <div className={customClass ? customClass : undefined}>
-                  {format(day, "d")}
+                  {format(date, "d")}
                 </div>
               );
             }
