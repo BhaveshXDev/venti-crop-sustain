@@ -22,10 +22,21 @@ const Login = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [error]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     
+    if (!email || !password) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+
     try {
       await login(email, password);
     } catch (err: any) {
@@ -44,7 +55,7 @@ const Login = () => {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) throw error;
