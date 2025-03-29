@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, Eye, EyeOff, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -13,15 +14,30 @@ const ResetPassword = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const checkResetToken = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        setError("Invalid or expired password reset link");
-        toast.error("Invalid or expired password reset link");
-        setTimeout(() => navigate("/login"), 2000);
+      setLoading(true);
+      try {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        
+        if (error || !currentUser) {
+          setError("Invalid or expired password reset link");
+          toast.error("Invalid or expired password reset link");
+          setTimeout(() => navigate("/login"), 2000);
+        }
+      } catch (err: any) {
+        setError(err.message || "Error verifying token");
+        toast.error(err.message || "Error verifying token");
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -42,18 +58,23 @@ const ResetPassword = () => {
     }
     
     setLoading(true);
+    setError(null);
     
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { data: { user: updatedUser }, error } = await supabase.auth.updateUser({
+        password
+      });
       
       if (error) throw error;
       
-      setSuccess(true);
-      toast.success("Password has been reset successfully");
-      
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      if (updatedUser) {
+        setSuccess(true);
+        toast.success("Password has been reset successfully");
+        
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      }
     } catch (error: any) {
       setError(error.message || "Failed to reset password");
       toast.error(error.message || "Failed to reset password");
