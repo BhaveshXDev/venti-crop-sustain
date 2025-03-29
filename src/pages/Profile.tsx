@@ -5,40 +5,89 @@ import Navigation from "@/components/Navigation";
 import { getGreenhouseData, Greenhouse } from "@/utils/api";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { user, updateUserProfile } = useAuth();
   const [greenhouse] = useState<Greenhouse>(getGreenhouseData());
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.mobile || "555-123-4567");
-  const [company, setCompany] = useState("VentiFarms Inc.");
-  const [location, setLocation] = useState(user?.location || "Central Valley, CA");
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.mobile || "555-123-4567",
+    company: "VentiFarms Inc.",
+    location: user?.location || "Central Valley, CA"
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | undefined>(user?.profileImage);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    if (!file.type.match('image.*')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setProfileImage(publicUrl);
+      await updateUserProfile({ profileImage: publicUrl });
+      toast.success("Profile image updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeProfileImage = async () => {
+    try {
+      if (!user?.profileImage) return;
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfileImage(result);
-        if (result) {
-          updateUserProfile({ profileImage: result });
-          toast.success("Profile image updated successfully");
-        }
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read image file");
-      };
-      reader.readAsDataURL(file);
+      // Extract file path from URL
+      const urlParts = user.profileImage.split('/');
+      const filePath = urlParts.slice(urlParts.indexOf('profile-images')).join('/');
+      
+      // Delete from storage
+      const { error } = await supabase.storage
+        .from('avatars')
+        .remove([filePath]);
+
+      if (error) throw error;
+
+      setProfileImage(undefined);
+      await updateUserProfile({ profileImage: undefined });
+      toast.success("Profile image removed");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove image");
     }
   };
 
@@ -46,31 +95,36 @@ const Profile = () => {
     fileInputRef.current?.click();
   };
 
-  const removeProfileImage = () => {
-    setProfileImage(undefined);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
-    if (!name.trim()) {
+  const handleSaveProfile = async () => {
+    if (!formData.name.trim()) {
       toast.error("Name cannot be empty");
       return;
     }
     
-    if (!email.includes('@') || !email.includes('.')) {
+    if (!formData.email.includes('@') || !formData.email.includes('.')) {
       toast.error("Please enter a valid email");
       return;
     }
-    
-    updateUserProfile({
-      name,
-      email,
-      mobile: phone,
-      location,
-      profileImage
-    });
-    
-    setIsEditing(false);
-    toast.success("Profile updated successfully");
+
+    try {
+      await updateUserProfile({
+        name: formData.name,
+        email: formData.email,
+        mobile: formData.phone,
+        location: formData.location,
+        profileImage
+      });
+      
+      setIsEditing(false);
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update profile");
+    }
   };
 
   return (
@@ -88,7 +142,11 @@ const Profile = () => {
                   <AvatarImage src={profileImage} alt={user?.name || "User"} />
                 ) : (
                   <AvatarFallback className="text-venti-green-600 dark:text-venti-green-400">
-                    <User size={48} />
+                    {user?.name ? (
+                      user.name.split(' ').map(n => n[0]).join('')
+                    ) : (
+                      <User size={48} />
+                    )}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -97,15 +155,21 @@ const Profile = () => {
                 <div className="absolute -bottom-1 -right-1 flex space-x-1">
                   <button 
                     onClick={triggerFileInput}
-                    className="bg-venti-green-500 text-white p-1.5 rounded-full shadow-md hover:bg-venti-green-600 transition-colors"
+                    disabled={isUploading}
+                    className="bg-venti-green-500 text-white p-1.5 rounded-full shadow-md hover:bg-venti-green-600 transition-colors disabled:opacity-50"
                   >
-                    <Upload size={14} />
+                    {isUploading ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    ) : (
+                      <Upload size={14} />
+                    )}
                   </button>
                   
                   {profileImage && (
                     <button 
                       onClick={removeProfileImage}
-                      className="bg-rose-500 text-white p-1.5 rounded-full shadow-md hover:bg-rose-600 transition-colors"
+                      disabled={isUploading}
+                      className="bg-rose-500 text-white p-1.5 rounded-full shadow-md hover:bg-rose-600 transition-colors disabled:opacity-50"
                     >
                       <X size={14} />
                     </button>
@@ -117,6 +181,7 @@ const Profile = () => {
                     className="hidden" 
                     accept="image/*"
                     onChange={handleImageUpload}
+                    disabled={isUploading}
                   />
                 </div>
               )}
@@ -139,9 +204,10 @@ const Profile = () => {
                   </div>
                   <input
                     id="name"
+                    name="name"
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="venti-input pl-10 w-full"
                   />
                 </div>
@@ -157,9 +223,10 @@ const Profile = () => {
                   </div>
                   <input
                     id="email"
+                    name="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="venti-input pl-10 w-full"
                   />
                 </div>
@@ -175,9 +242,10 @@ const Profile = () => {
                   </div>
                   <input
                     id="phone"
+                    name="phone"
                     type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    value={formData.phone}
+                    onChange={handleInputChange}
                     className="venti-input pl-10 w-full"
                   />
                 </div>
@@ -193,10 +261,12 @@ const Profile = () => {
                   </div>
                   <input
                     id="company"
+                    name="company"
                     type="text"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    value={formData.company}
+                    onChange={handleInputChange}
                     className="venti-input pl-10 w-full"
+                    disabled
                   />
                 </div>
               </div>
@@ -211,9 +281,10 @@ const Profile = () => {
                   </div>
                   <input
                     id="location"
+                    name="location"
                     type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    value={formData.location}
+                    onChange={handleInputChange}
                     className="venti-input pl-10 w-full"
                   />
                 </div>
@@ -223,12 +294,14 @@ const Profile = () => {
                 <button
                   onClick={() => setIsEditing(false)}
                   className="venti-button-outline flex-1"
+                  disabled={isUploading}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveProfile}
                   className="venti-button-primary flex-1"
+                  disabled={isUploading}
                 >
                   Save Changes
                 </button>
@@ -241,7 +314,7 @@ const Profile = () => {
                   <Mail size={18} className="text-venti-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-venti-gray-500 dark:text-venti-gray-400">Email</p>
-                    <p>{email}</p>
+                    <p>{formData.email}</p>
                   </div>
                 </div>
 
@@ -249,7 +322,7 @@ const Profile = () => {
                   <Phone size={18} className="text-venti-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-venti-gray-500 dark:text-venti-gray-400">Phone</p>
-                    <p>{phone}</p>
+                    <p>{formData.phone}</p>
                   </div>
                 </div>
 
@@ -257,7 +330,7 @@ const Profile = () => {
                   <Building size={18} className="text-venti-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-venti-gray-500 dark:text-venti-gray-400">Company</p>
-                    <p>{company}</p>
+                    <p>{formData.company}</p>
                   </div>
                 </div>
 
@@ -265,7 +338,7 @@ const Profile = () => {
                   <MapPin size={18} className="text-venti-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-venti-gray-500 dark:text-venti-gray-400">Location</p>
-                    <p>{location}</p>
+                    <p>{formData.location}</p>
                   </div>
                 </div>
               </div>
