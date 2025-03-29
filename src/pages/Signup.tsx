@@ -17,12 +17,19 @@ const Signup = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [error]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -42,6 +49,16 @@ const Signup = () => {
       return;
     }
 
+    if (!formData.email.includes('@') || !formData.email.includes('.')) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (!formData.name) {
+      toast.error("Please enter your name");
+      return;
+    }
+
     try {
       await signup(
         formData.email,
@@ -51,8 +68,8 @@ const Signup = () => {
         formData.mobile,
         profileImage || undefined
       );
-    } catch (err) {
-      console.error("Signup error:", err);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Signup failed");
     }
   };
 
@@ -105,6 +122,12 @@ const Signup = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="venti-glass dark:venti-glass-dark py-8 px-4 shadow rounded-xl sm:px-10">
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm rounded-lg">
+              {errorMessage}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSignup}>
             {/* Profile Image Upload */}
             <div className="flex flex-col items-center justify-center mb-2">
@@ -315,13 +338,6 @@ const Signup = () => {
                 />
               </div>
             </div>
-
-            {/* Error Display */}
-            {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 mt-2">
-                {error}
-              </div>
-            )}
 
             {/* Submit Button */}
             <div>
