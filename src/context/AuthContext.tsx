@@ -47,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log("Auth state change event:", event);
         setSession(currentSession);
         
         if (currentSession?.user) {
@@ -70,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             };
             
             setUser(userProfile);
+            console.log("User profile loaded:", userProfile);
           } catch (err) {
             console.error("Error fetching user profile:", err);
             setUser({
@@ -80,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         } else {
           setUser(null);
+          console.log("No user session found");
         }
         
         setLoading(false);
@@ -87,8 +90,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 
     const initializeAuth = async () => {
+      console.log("Initializing auth...");
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
+      console.log("Initial session:", data.session ? "Found" : "None");
       if (!data.session) {
         setLoading(false);
       }

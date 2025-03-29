@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -12,6 +13,7 @@ const Login = () => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { login, loading, error, user } = useAuth();
   const navigate = useNavigate();
 
@@ -26,7 +28,39 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Login attempt for:", email);
-    await login(email, password);
+    setErrorMessage(null); // Clear previous errors
+    
+    try {
+      // Try to log in with email and password
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error("Login error:", error.message);
+        
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          setErrorMessage("The email or password you entered is incorrect. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          setErrorMessage("Please verify your email before logging in. Check your inbox for a confirmation email.");
+        } else {
+          setErrorMessage(error.message);
+        }
+        
+        toast.error(errorMessage || "Login failed");
+        return;
+      }
+      
+      // If we get here, login was successful
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Unexpected login error:", err);
+      setErrorMessage(err.message || "An unexpected error occurred");
+      toast.error(errorMessage || "Login failed");
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -74,9 +108,9 @@ const Login = () => {
         </div>
 
         <div className="venti-glass dark:venti-glass-dark rounded-2xl p-6 shadow-sm mb-4">
-          {error && (
+          {errorMessage && (
             <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm rounded-lg">
-              {error}
+              {errorMessage}
             </div>
           )}
 
