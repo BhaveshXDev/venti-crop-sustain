@@ -139,7 +139,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     setError(null);
     try {
-      // First create the auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -147,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           data: {
             name,
           },
-          emailRedirectTo: window.location.origin + "/dashboard",
+          emailRedirectTo: window.location.origin + "/verify-email",
         },
       });
       
@@ -157,7 +156,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("User creation failed");
       }
 
-      // Upload profile image if provided
       let profileImageUrl = null;
       if (profileImage) {
         const fileExt = profileImage.split(';')[0].split('/')[1];
@@ -179,7 +177,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      // Create profile in profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -208,7 +205,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) return;
     
     try {
-      // Update auth metadata
       if (data.name) {
         const { error: authError } = await supabase.auth.updateUser({
           data: { name: data.name }
@@ -245,7 +241,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Helper function to convert data URL to Blob
   const dataURLtoBlob = (dataURL: string) => {
     const arr = dataURL.split(',');
     const mime = arr[0].match(/:(.*?);/)![1];
