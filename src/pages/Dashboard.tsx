@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Thermometer, Droplets, Wind, Bell, ChevronRight } from "lucide-react";
@@ -19,9 +18,10 @@ import {
 } from "@/utils/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
+import { toast } from "sonner";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [currentData, setCurrentData] = useState<SensorData | null>(null);
   const [historicalData, setHistoricalData] = useState<SensorData[]>([]);
@@ -50,6 +50,7 @@ const Dashboard = () => {
         await fetchHistoricalDataByPeriod(timePeriod);
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
@@ -59,8 +60,12 @@ const Dashboard = () => {
 
     // Set up polling for current sensor data
     const intervalId = setInterval(async () => {
-      const data = await fetchCurrentSensorData();
-      setCurrentData(data);
+      try {
+        const data = await fetchCurrentSensorData();
+        setCurrentData(data);
+      } catch (error) {
+        console.error("Error polling sensor data:", error);
+      }
     }, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
@@ -85,6 +90,7 @@ const Dashboard = () => {
       setHistoricalData(data);
     } catch (error) {
       console.error("Error fetching historical data:", error);
+      toast.error("Failed to load historical data");
     }
   };
 
@@ -226,7 +232,7 @@ const Dashboard = () => {
             {/* Historical data chart */}
             {chartData.length > 0 && (
               <LineChart
-                data={timePeriod === "24h" ? chartData.slice(-12) : chartData} // Show all data for longer periods
+                data={timePeriod === "24h" ? chartData.slice(-12) : chartData}
                 xKey="timestamp"
                 yKeys={[
                   { key: "temperature", color: "#ef4444", name: "Temp (°C)" },
