@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, Eye, EyeOff, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,14 +10,16 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if this is a valid password reset URL
     const checkResetToken = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       
-      if (error || !data.session) {
+      if (error || !session) {
+        setError("Invalid or expired password reset link");
         toast.error("Invalid or expired password reset link");
         setTimeout(() => navigate("/login"), 2000);
       }
@@ -54,6 +55,7 @@ const ResetPassword = () => {
         navigate("/login");
       }, 2000);
     } catch (error: any) {
+      setError(error.message || "Failed to reset password");
       toast.error(error.message || "Failed to reset password");
     } finally {
       setLoading(false);
@@ -80,6 +82,12 @@ const ResetPassword = () => {
         </div>
 
         <div className="venti-glass dark:venti-glass-dark rounded-2xl p-6 shadow-sm mb-4">
+          {error && (
+            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
           {success ? (
             <div className="flex flex-col items-center justify-center py-6">
               <div className="w-16 h-16 bg-venti-green-100 dark:bg-venti-green-900/30 rounded-full flex items-center justify-center mb-4">
