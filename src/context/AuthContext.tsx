@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Session } from "@supabase/supabase-js";
@@ -170,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         mobile: data.mobile,
         profile_image_url: data.profileImage,
         location: data.location,
-        updated_at: new Date().toISOString(), // Fix applied here
+        updated_at: new Date().toISOString(), // Convert Date to ISO string
       };
       
       const { error } = await supabase

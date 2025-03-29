@@ -20,13 +20,16 @@ const Signup = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
+    console.log("Signup page mounted, checking user:", user);
     if (user) {
+      console.log("User already logged in, navigating to dashboard");
       navigate("/dashboard");
     }
   }, [user, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Signup attempt for:", email);
     
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
@@ -40,6 +43,7 @@ const Signup = () => {
 
     try {
       await signup(email, password, name, gender, mobile, profileImage || undefined);
+      console.log("Signup successful");
     } catch (err) {
       console.error("Signup error:", err);
     }

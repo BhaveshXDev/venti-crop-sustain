@@ -16,13 +16,16 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Login page mounted, checking user:", user);
     if (user) {
+      console.log("User already logged in, navigating to dashboard");
       navigate("/dashboard");
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login attempt for:", email);
     await login(email, password);
   };
 
@@ -209,7 +212,7 @@ const Login = () => {
         </div>
       )}
       
-{/*       <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
+      {/*       <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
         <p>© {new Date().getFullYear()} VentriGrow. All rights reserved.</p>
       </footer> */}
     </div>
