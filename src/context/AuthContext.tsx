@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .from('profiles')
         .upsert({
           id: authData.user.id,
-          email: email, // Make sure to include email field here
+          email: email, // Explicitly passing email to ensure it's stored
           name,
           gender,
           mobile,
