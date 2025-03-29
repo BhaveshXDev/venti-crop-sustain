@@ -156,7 +156,7 @@ const Signup = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="venti-input pl-10 block w-full"
-                  placeholder="John Doe"
+                  placeholder="Enter Your Name"
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ const Signup = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="venti-input pl-10 block w-full"
-                  placeholder="you@example.com"
+                  placeholder="Enter Your Email"
                 />
               </div>
             </div>
@@ -237,7 +237,7 @@ const Signup = () => {
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   className="venti-input pl-10 block w-full"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+91"
                 />
               </div>
             </div>
