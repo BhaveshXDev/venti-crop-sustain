@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,48 +16,19 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Login page mounted, checking user:", user);
     if (user) {
-      console.log("User already logged in, navigating to dashboard");
       navigate("/dashboard");
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt for:", email);
-    setErrorMessage(null); // Clear previous errors
+    setErrorMessage(null);
     
     try {
-      // Try to log in with email and password
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        console.error("Login error:", error.message);
-        
-        // Handle specific error cases
-        if (error.message.includes("Invalid login credentials")) {
-          setErrorMessage("The email or password you entered is incorrect. Please try again.");
-        } else if (error.message.includes("Email not confirmed")) {
-          setErrorMessage("Please verify your email before logging in. Check your inbox for a confirmation email.");
-        } else {
-          setErrorMessage(error.message);
-        }
-        
-        toast.error(errorMessage || "Login failed");
-        return;
-      }
-      
-      // If we get here, login was successful
-      toast.success("Login successful!");
-      navigate("/dashboard");
+      await login(email, password);
     } catch (err: any) {
-      console.error("Unexpected login error:", err);
-      setErrorMessage(err.message || "An unexpected error occurred");
-      toast.error(errorMessage || "Login failed");
+      setErrorMessage(err.message || "Login failed");
     }
   };
 
@@ -245,10 +214,6 @@ const Login = () => {
           </div>
         </div>
       )}
-      
-      {/*       <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
-        <p>© {new Date().getFullYear()} VentriGrow. All rights reserved.</p>
-      </footer> */}
     </div>
   );
 };
