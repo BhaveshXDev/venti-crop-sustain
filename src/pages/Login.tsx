@@ -91,7 +91,7 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="Enter Your Email"
                   className="venti-input pl-10 w-full"
                   required
                 />
@@ -209,9 +209,9 @@ const Login = () => {
         </div>
       )}
       
-      <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
+{/*       <footer className="py-3 px-4 text-center text-xs text-venti-gray-500 dark:text-venti-gray-400 mt-8">
         <p>© {new Date().getFullYear()} VentriGrow. All rights reserved.</p>
-      </footer>
+      </footer> */}
     </div>
   );
 };
