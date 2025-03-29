@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -181,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .from('profiles')
         .upsert({
           id: authData.user.id,
-          email,
+          email: email, // Make sure to include email field here
           name,
           gender,
           mobile,
@@ -212,10 +213,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (authError) throw authError;
       }
       
-      const updates = {
-        ...data,
-        updated_at: new Date().toISOString(),
-      };
+      // Convert ProfileImage to profile_image_url format for database
+      const updates: any = { ...data };
+      if ('profileImage' in data) {
+        updates.profile_image_url = data.profileImage;
+        delete updates.profileImage;
+      }
+      
+      // Do not update the email in profiles table
+      if ('email' in updates) {
+        delete updates.email;
+      }
+      
+      updates.updated_at = new Date().toISOString();
       
       const { error } = await supabase
         .from('profiles')
