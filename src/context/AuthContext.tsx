@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
@@ -28,7 +27,7 @@ interface AuthContextType {
     mobile?: string,
     profileImage?: string
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   error: string | null;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
@@ -59,14 +58,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log("Auth state change event:", event);
         await handleSessionChange(currentSession);
+        if (event === 'SIGNED_IN') navigate('/dashboard');
+        if (event === 'SIGNED_OUT') navigate('/login');
       }
     );
 
     initializeAuth();
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleSessionChange = async (currentSession: Session | null) => {
     setSession(currentSession);
@@ -84,15 +84,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const userProfile: UserProfile = {
           id: currentSession.user.id,
           email: currentSession.user.email || "",
-          name: profileData?.name || "",
-          gender: profileData?.gender || undefined,
-          mobile: profileData?.mobile || undefined,
-          profileImage: profileData?.profile_image_url || undefined,
-          location: profileData?.location || undefined,
+          name: profileData?.name || currentSession.user.user_metadata?.name || "",
+          gender: profileData?.gender,
+          mobile: profileData?.mobile,
+          profileImage: profileData?.profile_image_url,
+          location: profileData?.location,
         };
         
         setUser(userProfile);
-        console.log("User profile loaded:", userProfile);
       } catch (err) {
         console.error("Error fetching user profile:", err);
         setUser({
@@ -103,7 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } else {
       setUser(null);
-      console.log("No user session found");
     }
     
     setLoading(false);
@@ -113,17 +111,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) throw error;
       
-      navigate("/dashboard");
+      toast.success("Logged in successfully");
     } catch (err: any) {
       setError(err.message || "Login failed");
-      toast.error(err.message || "Login failed");
+      toast.error(err.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -140,49 +135,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     setError(null);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-          emailRedirectTo: window.location.origin + "/verify-email",
-        },
-      });
-      
-      if (authError) throw authError;
-      
-      if (!authData.user) {
-        throw new Error("User creation failed");
-      }
-
+      // First upload profile image if exists
       let profileImageUrl = null;
       if (profileImage) {
         const fileExt = profileImage.split(';')[0].split('/')[1];
-        const fileName = `${authData.user.id}-${Date.now()}.${fileExt}`;
+        const fileName = `profile-${Date.now()}.${fileExt}`;
         const filePath = `profile-images/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, dataURLtoBlob(profileImage), {
-            cacheControl: '3600',
-            upsert: false
-          });
+          .upload(filePath, dataURLtoBlob(profileImage));
 
         if (!uploadError) {
-          const { data: urlData } = supabase.storage
+          const { data: { publicUrl } } = supabase.storage
             .from('avatars')
             .getPublicUrl(filePath);
-          profileImageUrl = urlData.publicUrl;
+          profileImageUrl = publicUrl;
         }
       }
 
+      // Then create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+          emailRedirectTo: `${window.location.origin}/verify-email`,
+        },
+      });
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("User creation failed");
+
+      // Create profile in database
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: authData.user.id,
-          email: email, // Explicitly passing email to ensure it's stored
+          email,
           name,
           gender,
           mobile,
@@ -193,7 +183,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (profileError) throw profileError;
       
       toast.success("Sign up successful! Please check your email for verification.");
-      navigate("/verify-email"); // Redirect to verification page
     } catch (err: any) {
       setError(err.message || "Signup failed");
       toast.error(err.message || "Signup failed");
@@ -206,23 +195,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) return;
     
     try {
-      if (data.name) {
-        const { error: authError } = await supabase.auth.updateUser({
-          data: { name: data.name }
-        });
-        if (authError) throw authError;
-      }
-      
-      // Convert ProfileImage to profile_image_url format for database
       const updates: any = { ...data };
-      if ('profileImage' in data) {
-        updates.profile_image_url = data.profileImage;
+      if ('profileImage' in data && data.profileImage) {
+        const fileExt = data.profileImage.split(';')[0].split('/')[1];
+        const fileName = `profile-${Date.now()}.${fileExt}`;
+        const filePath = `profile-images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, dataURLtoBlob(data.profileImage));
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+          updates.profile_image_url = publicUrl;
+        }
         delete updates.profileImage;
-      }
-      
-      // Do not update the email in profiles table
-      if ('email' in updates) {
-        delete updates.email;
       }
       
       updates.updated_at = new Date().toISOString();
@@ -234,18 +223,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       if (error) throw error;
       
-      setUser({ ...user, ...data });
+      setUser({ ...user, ...updates });
       toast.success("Profile updated successfully");
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
-      console.error("Error updating profile:", err);
     }
   };
 
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate("/login");
+      toast.success("Logged out successfully");
     } catch (err: any) {
       toast.error(err.message || "Logout failed");
     }
@@ -265,7 +253,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, login, signup, logout, error, updateUserProfile }}
+      value={{ 
+        user, 
+        session, 
+        loading, 
+        login, 
+        signup, 
+        logout, 
+        error, 
+        updateUserProfile 
+      }}
     >
       {children}
     </AuthContext.Provider>
