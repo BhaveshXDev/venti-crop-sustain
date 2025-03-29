@@ -1,49 +1,56 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Check, AlertTriangle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const verifyEmail = async () => {
       const token = searchParams.get('token');
       const type = searchParams.get('type');
 
-      if (token && type === 'email') {
-        try {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'email',
-          });
-
-          if (error) {
-            throw error;
-          }
-
-          setVerificationStatus('success');
-          toast.success('Email verified successfully');
-          
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            navigate('/login');
-          }, 3000);
-        } catch (error: any) {
-          console.error('Verification error:', error);
-          setVerificationStatus('error');
-          setErrorMessage(error.message || 'Failed to verify email');
-          toast.error(error.message || 'Failed to verify email');
-        }
-      } else {
+      if (!token || type !== 'email') {
         setVerificationStatus('error');
         setErrorMessage('Invalid verification link');
         toast.error('Invalid verification link');
+        return;
+      }
+
+      try {
+        const { data: { user: verifiedUser }, error } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'email',
+        });
+
+        if (error) throw error;
+
+        if (verifiedUser) {
+          setVerificationStatus('success');
+          toast.success('Email verified successfully');
+          
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 3000);
+        }
+      } catch (error: any) {
+        console.error('Verification error:', error);
+        setVerificationStatus('error');
+        setErrorMessage(error.message || 'Failed to verify email');
+        toast.error(error.message || 'Failed to verify email');
       }
     };
 
@@ -84,7 +91,7 @@ const VerifyEmail = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Email Verified</h3>
               <p className="text-venti-gray-600 dark:text-venti-gray-400">
-                Your email has been successfully verified. Redirecting you to login...
+                Your email has been successfully verified. Redirecting you to dashboard...
               </p>
             </div>
           )}
