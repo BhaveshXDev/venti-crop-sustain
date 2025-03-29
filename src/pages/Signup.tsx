@@ -1,49 +1,56 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, Mail, Lock, User, Phone, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const { signup, loading, error, user } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
+    gender: "",
+    mobile: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [gender, setGender] = useState("");
-  const [mobile, setMobile] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  // Redirect if already authenticated
   useEffect(() => {
-    console.log("Signup page mounted, checking user:", user);
     if (user) {
-      console.log("User already logged in, navigating to dashboard");
       navigate("/dashboard");
     }
   }, [user, navigate]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Signup attempt for:", email);
     
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
     
-    if (password.length < 6) {
+    if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
 
     try {
-      await signup(email, password, name, gender, mobile, profileImage || undefined);
-      console.log("Signup successful");
+      await signup(
+        formData.email,
+        formData.password,
+        formData.name,
+        formData.gender,
+        formData.mobile,
+        profileImage || undefined
+      );
     } catch (err) {
       console.error("Signup error:", err);
     }
@@ -51,21 +58,28 @@ const Signup = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string);
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read image file");
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
     }
+    
+    if (!file.type.match('image.*')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setProfileImage(e.target.result as string);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -126,6 +140,7 @@ const Signup = () => {
                 
                 <input 
                   id="profile-upload" 
+                  name="profileImage"
                   type="file" 
                   className="hidden" 
                   accept="image/*"
@@ -147,18 +162,15 @@ const Signup = () => {
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User
-                    className="h-5 w-5 text-venti-gray-400"
-                    aria-hidden="true"
-                  />
+                  <User className="h-5 w-5 text-venti-gray-400" aria-hidden="true" />
                 </div>
                 <input
                   id="name"
                   name="name"
                   type="text"
                   required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={formData.name}
+                  onChange={handleChange}
                   className="venti-input pl-10 block w-full"
                   placeholder="Enter Your Name"
                 />
@@ -175,10 +187,7 @@ const Signup = () => {
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail
-                    className="h-5 w-5 text-venti-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Mail className="h-5 w-5 text-venti-gray-400" aria-hidden="true" />
                 </div>
                 <input
                   id="email"
@@ -186,8 +195,8 @@ const Signup = () => {
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   className="venti-input pl-10 block w-full"
                   placeholder="Enter Your Email"
                 />
@@ -206,8 +215,8 @@ const Signup = () => {
                 <select
                   id="gender"
                   name="gender"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
+                  value={formData.gender}
+                  onChange={handleChange}
                   className="venti-input block w-full"
                 >
                   <option value="">Select Gender</option>
@@ -229,17 +238,14 @@ const Signup = () => {
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone
-                    className="h-5 w-5 text-venti-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Phone className="h-5 w-5 text-venti-gray-400" aria-hidden="true" />
                 </div>
                 <input
                   id="mobile"
                   name="mobile"
                   type="tel"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  value={formData.mobile}
+                  onChange={handleChange}
                   className="venti-input pl-10 block w-full"
                   placeholder="+91"
                 />
@@ -256,19 +262,16 @@ const Signup = () => {
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock
-                    className="h-5 w-5 text-venti-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Lock className="h-5 w-5 text-venti-gray-400" aria-hidden="true" />
                 </div>
                 <input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   className="venti-input pl-10 pr-10 block w-full"
                   placeholder="••••••••"
                 />
@@ -291,25 +294,22 @@ const Signup = () => {
             {/* Confirm Password Field */}
             <div>
               <label
-                htmlFor="confirm-password"
+                htmlFor="confirmPassword"
                 className="block text-sm font-medium text-venti-gray-700 dark:text-venti-gray-300"
               >
                 Confirm Password
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock
-                    className="h-5 w-5 text-venti-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Lock className="h-5 w-5 text-venti-gray-400" aria-hidden="true" />
                 </div>
                 <input
-                  id="confirm-password"
-                  name="confirm-password"
+                  id="confirmPassword"
+                  name="confirmPassword"
                   type={showPassword ? "text" : "password"}
                   required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   className="venti-input pl-10 pr-10 block w-full"
                   placeholder="••••••••"
                 />
